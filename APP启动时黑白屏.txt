@@ -1,0 +1,172 @@
+一、App启动原理及过程详解
+
+1、APP启动概述
+    在Android 中把在Launch界面点击App图标（或快捷方式图标）到加载完成第一个Activity为止成为APP的启动，这是直观上的描述APP启动。在同一台手机上同一个APP两次启动一个APP所花的时间有可能不同，第一次会稍慢些第二次就比第一次稍快些，这是因为Android做了个巧妙的设计，把启动分为冷启动和热启动、首次启动（本质上也是冷启动）三大类：
+
+    冷启动 ——当启动应用时，系统后台没有该应用的进程（对应的内存空间），这时系统会重新创建一个新的进程分配给该应用，这个启动方式就是冷启动。冷启动因为系统会重新创建一个新的进程分配给它，所以会先创建和初始化 Application 类，再创建和初始化 Activity 类，最后加载Activity对应的布局并显示在界面上。
+
+    热启动——当启动应用时，后台已有该应用的进程（比如说按back键、home键，应用虽然会从前台退出，但是该应用的进程是依然会保留在后台，可进入任务列表查看），所以在已有进程的情况下，这种启动会从已有的进程中来启动应用，这个方式叫热启动。热启动因为会从已有的进程中来启动，所以热启动就不会走 Application 这步了，而是直接走 Activity，所以热启动的过程不会创建和初始化 Application，因为一个应用从新进程的创建到进程的销毁，Application 只会初始化一次。
+
+    首次启动——首次启动严格划分是冷启动中的一种特殊情况，之所以把首次启动单独列出来，一般来说，首次启动时间会比非首次启动要久，首次启动会做一些系统初始化工作，如缓存目录的生产，数据库的建立，SharedPreference的初始化，如果存在多 dex 和插件的情况下，首次启动会有一些特殊需要处理的逻辑，而且对启动速度有很大的影响，所以首次启动的速度非常重要，毕竟影响用户对 App 的第一映像。
+
+2、APP启动过程
+说到APP启动过程就离不开三个概念：启动时间、白屏和黑屏
+
+2.1、启动时间
+从代码角度上来看，用户点击Launcher界面的APP图标到展示真正的Activity界面，这期间系统都是需要一定的时间准备（系统需要去分配对应的进程空间并加载对应的资源到内存中，而且一般来说时间不会很长，但是你在APP做了很多初始化工作就有可能变得很长，从一定程度上你来说你的编码水平决定着启动时间的长短），这段时间就叫做启动时间
+
+2.2、白屏和黑屏
+因为这启动时间因APP而异，系统为了避免造成卡顿的误会，如果APP继承的主题是android:Theme.Light，则系统会主动预显示出一个白色背景的界面，如果不进行优化每次冷启动的时候都有可能先显示出白屏过了一段时间之后才真正跳转到我们的真正的Activity，即所谓的白屏现象（至于为啥是白色的，是因为系统源码的样式资源里定义的颜色就是白色的，ctrl+点击对应的主题一层层往下找就会发现"Theme.AppCompat.Light"——>“Base.Theme.AppCompat.Light”——>“Base.V7.Theme.AppCompat.Light”——>“Platform.AppCompat.Light”——>“android:Theme.Holo.Light”）
+1
+<style name="Platform.AppCompat.Light" parent="android:Theme.Holo.Light">
+2
+        <item name="android:windowNoTitle">true</item>
+3
+        <item name="android:windowActionBar">false</item>
+4
+5
+        <item name="android:buttonBarStyle">?attr/buttonBarStyle</item>
+6
+        <item name="android:buttonBarButtonStyle">?attr/buttonBarButtonStyle</item>
+7
+        <item name="android:borderlessButtonStyle">?attr/borderlessButtonStyle</item>
+8
+9
+        <!-- Window colors -->
+10
+        <item name="android:colorForeground">@color/foreground_material_light</item>
+11
+        <item name="android:colorForegroundInverse">@color/foreground_material_dark</item>
+12
+        <item name="android:colorBackground">@color/background_material_light</item>
+13
+        <item name="android:colorBackgroundCacheHint">@color/abc_background_cache_hint_selector_material_light</item>
+14
+        <item name="android:disabledAlpha">@dimen/abc_disabled_alpha_material_light</item>
+15
+        <item name="android:backgroundDimAmount">0.6</item>
+16
+    黑白屏问题根源
+17
+        <item name="android:windowBackground">@color/background_material_light</item>
+18
+....
+19
+</style>
+反之如果APP主题没有继承Theme.Holo.Light，则会显示黑屏，以上就是黑白屏的根源。
+
+二、黑白屏的解决措施
+系统进程在创建Application的过程中会产生一个BackgroudWindow，等到App完成了第一次绘制，系统进程才会用MainActivity的界面替换掉原来的BackgroudWindow，系统首先会读取当前Activity的Theme，然后根据Theme中的配置来绘制，当Activity加载完毕后，才会替换为真正的界面。
+
+1、设置Windows背景为透明
+这种解决方案其实就相当于是欺骗用户，当用户点击APP时，系统会自动把windowBacground置为透明的，自然看不见黑白屏了，取而代之是看到系统当前的Launcher界面，容易造成点击了APP后没有响应的误解，以前QQ和今日头条采用过这样的方式，不过可能会和转场动画冲突，遇到的较多都是因为继承关系错误造成的，还有适配android8.0的时候在 values-v26中，取消android:windowIsTranslucent属性。
+1
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+2
+        <item name="android:windowIsTranslucent">true</item>
+3
+        <!-- Customize your theme here. -->
+4
+        <item name="colorPrimary">@color/colorPrimary</item>
+5
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+6
+        <item name="colorAccent">@color/colorAccent</item>
+7
+    </style>
+2、单独定义用于特定Activity的style
+这是Google官方提供的解决方案：通过对属性android:windowBackground来进行加载前的配置，较常见的是使用一个layer-list资源来作为android:windowBackground要显示的图，然后再替换上Activity真正的主题，具体步骤如下：
+
+2.1、定义替换的背景Drawable资源文件
+这里是通过layer-list来实现图片的叠加，让开发者可以自由组合。其中属性**android:opacity=“opaque”**是为了防止在启动的时候出现背景的闪烁，你也可以使用其他Drawable资源。
+1
+<?xml version="1.0" encoding="utf-8"?>
+2
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+3
+    android:opacity="opaque"
+4
+    >
+5
+    <item android:drawable="@color/white"/>
+6
+    <item>
+7
+        <bitmap
+8
+            android:gravity="center"
+9
+            android:src="@drawable/begin_page"/>
+10
+    </item>
+11
+</layer-list>
+2.2、单独定义Activity 特有的预加载的样式
+这里定义的样式是将要配置到对应的Activity上的。
+1
+<resources>
+2
+    <!-- Base application theme. -->
+3
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+4
+        <!-- Customize your theme here. -->
+5
+        <item name="colorPrimary">@color/colorPrimary</item>
+6
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+7
+        <item name="colorAccent">@color/colorAccent</item>
+8
+    </style>
+9
+<!--将用于配置到特定的Activity上的样式-->
+10
+    <style name="SplashStyle" parent="AppTheme">
+11
+        <item name="android:windowBackground">@drawable/layer_splash</item>
+12
+    </style>
+13
+14
+</resources>
+2.3、在清单AndroidManifest中给对应的Activity设置预加载的样式style
+需要注意一定是Activity的Theme，而不是Application的Theme
+1
+        <activity android:name=".ui.main.activity.SplashActivity"
+2
+            android:theme="@style/SplashStyle"
+3
+            >
+4
+            <intent-filter>
+5
+                <action android:name="android.intent.action.MAIN" />
+6
+7
+                <category android:name="android.intent.category.LAUNCHER" />
+8
+            </intent-filter>
+9
+        </activity>
+2.4、在Activity加载真正的界面之前，将Theme还原回正常的Theme
+1
+public class MainActivity extends AppCompatActivity {
+2
+3
+    @Override
+4
+    protected void onCreate(Bundle savedInstanceState) {
+5
+        setTheme(R.style.AppTheme);//还原回正常的Theme
+6
+        super.onCreate(savedInstanceState);
+7
+        SystemClock.sleep(2000);
+8
+        setContentView(R.layout.activity_main);
+9
+    }
+10
+}
+启动的时候，系统会先展示一个画面，这个画面就是系统解析到的Style，等Activity加载完全完毕后，才会加载Activity的界面，而在Activity的界面中，我们将主题重新设置为正常的主题，从而达到一个友好的启动体验，这种方式其实并没有真正的加速启动过程，而是通过交互体验来优化了展示的效果。其实以上两种方式的核心思想都是差不多的：替换系统预定义的样式，所以也可以替换很多其他的属性来实现具体的UI效果。
