@@ -10,6 +10,7 @@ import com.baidu.traveleverywhere.base.BaseApp;
 */
 //Sharepreference
 public class SpUtil {
+	private String gme = "解决冲突";
     /**
 	 * 保存在手机里面的文件名
 	 */
