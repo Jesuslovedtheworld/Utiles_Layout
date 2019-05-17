@@ -1,17 +1,12 @@
-package com.baidu.traveleverywhere.utils;
+package com.everywhere.trip.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 
-import com.baidu.traveleverywhere.base.BaseApp;
-/*
-* *  author gme
-*    time 2019年4月30日14:08:37
-*/
+import com.everywhere.trip.base.BaseApp;
+
 //Sharepreference
 public class SpUtil {
-	private int a = 0;
-	private String gme = "解决冲突";
     /**
 	 * 保存在手机里面的文件名
 	 */

@@ -1,4 +1,4 @@
-package com.baidu.traveleverywhere.utils;
+package com.everywhere.trip.util;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -15,8 +15,8 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Toast;
 
-import com.baidu.traveleverywhere.base.BaseApp;
-import com.baidu.traveleverywhere.base.Constants;
+import com.everywhere.trip.base.BaseApp;
+import com.everywhere.trip.base.Constants;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,7 +27,7 @@ import java.io.IOException;
 
 
 /**
- * Created by gme on 2019年4月30日14:08:37
+ * Created by codeest on 2016/8/4.
  *
  */
 public class SystemUtil {
@@ -143,6 +143,16 @@ public class SystemUtil {
     public static int px2dp(float pxValue) {
         final float scale = BaseApp.getInstance().getResources().getDisplayMetrics().density;
         return (int) (pxValue / scale + 0.5f);
+    }
+
+    public static int sp2px(float spValue) {
+        float scaledDensity = BaseApp.getInstance().getResources().getDisplayMetrics().scaledDensity;
+        return (int)(spValue * scaledDensity + 0.5F);
+    }
+
+    public static int px2sp(float pxValue) {
+        float scaledDensity = BaseApp.getInstance().getResources().getDisplayMetrics().scaledDensity;
+        return (int)(pxValue / scaledDensity + 0.5F);
     }
 
     /**

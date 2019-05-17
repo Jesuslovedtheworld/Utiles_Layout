@@ -1,10 +1,12 @@
-package com.baidu.traveleverywhere.utils;
+package com.everywhere.trip.util;
 
 import android.widget.Toast;
 
-import com.baidu.traveleverywhere.base.BaseApp;
+import com.everywhere.trip.base.BaseApp;
+
+
 /**
- * Created by gme on 2019年4月30日14:08:37
+ * Created by asus on 2019/3/5.
  */
 
 public class ToastUtil {
