@@ -1,0 +1,60 @@
+  //下拉隐藏底部导航栏
+    @SuppressLint("ClickableViewAccessibility")
+    private void initRecy() {
+        mRvHome.setOnTouchListener(new View.OnTouchListener() {
+            public float mEndY;
+            public float mStartY;
+
+            @SuppressLint("RestrictedApi")
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        mStartY = event.getY();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        mEndY = event.getY();
+                        float v1 = mEndY - mStartY;
+                        if (v1 > 0) {
+
+                            //我这个是在fragment中的操作 这个是获取activity中的布局
+                            getActivity().findViewById(R.id.toolbar).setVisibility(View.VISIBLE);
+                            getActivity().findViewById(R.id.rg).setVisibility(View.VISIBLE);
+                            mBtnMain.setVisibility(View.VISIBLE);
+                        } else if (v1 < 0) {
+                            getActivity().findViewById(R.id.rg).setVisibility(View.GONE);
+                            getActivity().findViewById(R.id.toolbar).setVisibility(View.GONE);
+                            mBtnMain.setVisibility(View.GONE);
+                        }
+                        break;
+                }
+                return gestureDetector.onTouchEvent(event);
+            }
+        });
+        }
+    GestureDetector gestureDetector = new GestureDetector(getContext(),
+            new GestureDetector.OnGestureListener() {
+                @Override
+                public boolean onDown(MotionEvent e) {
+                    return false;
+                }
+                @Override
+                public void onShowPress(MotionEvent e) {
+                }
+                @Override
+                public boolean onSingleTapUp(MotionEvent e) {
+                    // do something
+                    return true;
+                }
+                @Override
+                public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                    return false;
+                }
+                @Override
+                public void onLongPress(MotionEvent e) {
+                }
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                    return false;
+                }
+            });
